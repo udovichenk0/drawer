@@ -6,6 +6,13 @@ const stg = ref<Konva.Stage>()
 const lyr = ref<Konva.Layer>()
 const line = ref<Konva.Line>()
 const isPaint = ref(false)
+
+const activeColor = ref('#fff')
+const changeColor = (event: any) => {
+  if(!event.target && !event.target.value) return
+  const color = event.target.value
+  activeColor.value = color
+}
 onMounted(() => {
   if(!canvas.value) return
   const stage = new Konva.Stage({
@@ -18,7 +25,7 @@ onMounted(() => {
   lyr.value = layer
   stg.value.add(layer);
 })
-const draw = () => {
+const startDraw = () => {
   if(!stg.value) return
   stg.value.on('mousemove', () => {
     const selectedLine = line.value
@@ -28,6 +35,13 @@ const draw = () => {
     const pointers = selectedLine.points().concat([x,y])
     selectedLine.points(pointers)
   })
+  stg.value.on('mouseleave', stopDraw)
+}
+const stopDraw = () => {
+  if(!stg.value) return
+  isPaint.value = false
+  stg.value.off('mousemove')
+  stg.value.off('mouseleave')
 }
 onMounted(() => {
   if(!canvas.value || !stg.value) return
@@ -37,25 +51,28 @@ onMounted(() => {
     const { x, y } = pos
     line.value = new Konva.Line({
       points: [x, y, x, y],
-      stroke: 'red',
+      stroke: activeColor.value,
       strokeWidth: 15,
       lineCap: 'round',
       lineJoin: 'round',
     });
     isPaint.value = true
     lyr.value?.add(line.value)
-    draw()
+    startDraw()
   })
-  stg.value?.on('mouseup', () => {
-    isPaint.value = false
-    stg.value?.off('mousemove')
-  })
+  stg.value?.on('mouseup', stopDraw)
 })
 
 </script>
 
 <template>
-  <div style="border: 1px solid white" ref="canvas" id="canvas-container"></div>
+  <div>
+    <div>
+      <h1>Colors:</h1>
+      <input type="color" @change="changeColor">
+    </div>
+    <div style="border: 1px solid white" ref="canvas" id="canvas-container"></div>
+  </div>
 </template>
 
 <style scoped>
