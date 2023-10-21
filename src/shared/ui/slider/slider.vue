@@ -2,17 +2,17 @@
 defineProps<{
   max: number, 
   min: number, 
-  strokeWidth: number
+  value: number
 }>()
 const emit = defineEmits<{
-  (e: 'update:strokeWidth', value: number): void
+  (e: 'change', value: number): void
 }>()
 const handleInput = (event: Event) => {
   const target = event.target as HTMLInputElement
-  emit('update:strokeWidth', +target.value)
+  emit('change', +target.value)
 }
 </script>
 <template>
-  {{ strokeWidth }}
-  <input type="range" :min="min" :max="max" :value="strokeWidth" @input="handleInput">
+  {{ value }}
+  <input type="range" :min="min" :max="max" value="value" @input="handleInput">
 </template>
