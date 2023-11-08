@@ -1,12 +1,7 @@
-<script setup lang="ts">
-import Konva from 'konva'
-import { onMounted, reactive, ref } from 'vue';
-import { RangeInput } from './shared/ui/slider';
-import { PaintCursor } from './cursor'
-import { Canvas } from './canvas'
-import { setCursorDiameter } from './cursor';
-
-// const drawFactory  = () => {
+// import { setCursorDiameter } from './../cursor/cursor.model';
+// import Konva from "konva"
+// import { reactive, ref } from "vue"
+// export const drawFactory  = (canvas:any, stage:any, layer:any) => {
 //   const DEFAULT_COLOR = '#000000'
 //   const DEFAULT_SIZE = 10
 //   const activeColor = ref(DEFAULT_COLOR)
@@ -29,7 +24,8 @@ import { setCursorDiameter } from './cursor';
 //   }
 
 //   const startDraw = () => {
-    
+//     console.log(stage.value)
+//     return 
 //     const pos = stage.value?.getPointerPosition()
 //     if(!pos) return
 //     const { x, y } = pos
@@ -124,36 +120,3 @@ import { setCursorDiameter } from './cursor';
 //     activeColor
 //   }
 // }
-
-
-// onMounted(() => {
-//   setCursorDiameter(strokeWidth.value)
-// })
-
-</script>
-
-<template >
-  <div style="height: 100vh; display: flex; flex-direction: column">
-  <PaintCursor/>
-    <!-- <div>
-      <input type="color" :value="activeColor" @input="changeColor">
-      <RangeInput :min="1" :max="125" :value="strokeWidth" @change="changeStrokeWidth" />
-    </div> -->
-    <!-- <div @click="console.log($event)" ref="container" id="container" style="width: 100%; height: 100vh; cursor: none;"> -->
-      <Canvas/>
-      <!-- <div class="canvas" ref="canvas" id="canvas-container"></div> -->
-    <!-- </div> -->
-  </div>
-</template>
-
-<style scoped>
-.canvas {
-  background: white;
-  width: 100vw;
-  height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: none
-}
-</style>

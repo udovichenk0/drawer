@@ -2,7 +2,7 @@
 import { onMounted } from 'vue';
 import { paintCursor } from './cursor.model';
 onMounted(() => {
-  console.log(paintCursor.value)
+  // console.log(paintCursor.value)
 })
 </script>
 <template>
