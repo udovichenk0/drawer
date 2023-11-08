@@ -2,54 +2,28 @@
 import Konva from 'konva'
 import { onMounted, reactive, ref } from 'vue';
 import { RangeInput } from './shared/ui/slider';
+import { PaintCursor } from './cursor'
+import { cursorMove, hidePaintCursor, setCursorDiameter, showPaintCursor } from './cursor';
 const canvas = ref<HTMLDivElement>()
-const cursor = ref<HTMLDivElement>()
-// const container = ref<HTMLDivElement>()
 const stg = ref<Konva.Stage>()
 const lyr = ref<Konva.Layer>()
-
-const activeColor = ref('#000')
-const strokeWidth = ref(10)
-// const canvasFactory = () => {
-//   const canvas = ref<HTMLDivElement>()
-//   const layer = ref<Konva.Layer>()
-//   const stage = ref<Konva.Stage>()
-
-//   const setCanvas = (canvasElement: HTMLDivElement) => {
-//     if(!canvas.value) return
-//     canvas.value = canvasElement
-//   }
-//   const setStage = (width: number, height: number, canvasElement: HTMLDivElement) => {
-//     stage.value = new Konva.Stage({
-//       container: canvasElement,
-//       width,
-//       height,
-//     });
-//   }
-//   const setLayer = () => {
-//     layer.value = new Konva.Layer();
-//   }
-//   const init = (canvasElement: HTMLDivElement) => {
-//     if(!canvas.value) return
-//     setCanvas(canvasElement)
-//     setStage(500, 500, canvas.value)
-//     layer.value = new Konva.Layer();
-//     stage.value?.add(layer.value)  
-//   }
-//   const getCanvas = () => canvas.value
-
-//   return {
-//     setCanvas,
-//     getCanvas,
-//     setLayer,
-//     init
-//   }
-// }
-const changeStrokeWidth = (width: number) => {
-  strokeWidth.value = width
+const initStage = ({width, height}:{width: number, height: number}) => {
+  if(!canvas.value) return
+  const stage = new Konva.Stage({
+    container: canvas.value,
+    width,
+    height,
+  })
+  stg.value = stage
+}
+const initLayer = () => {
+  if(!stg.value) return
+  const layer = new Konva.Layer()
+  lyr.value = layer
+  stg.value?.add(layer)
 }
 const drawFactory  = () => {
-  const DEFAULT_COLOR = '#000'
+  const DEFAULT_COLOR = '#000000'
   const DEFAULT_SIZE = 10
   const activeColor = ref(DEFAULT_COLOR)
   const strokeWidth = ref(DEFAULT_SIZE)
@@ -67,6 +41,7 @@ const drawFactory  = () => {
 
   const changeStrokeWidth = (width: number) => {
     strokeWidth.value = width
+    setCursorDiameter(width)
   }
   const restoreOutsidePosition = () => {
     outsidePosition.x = 0
@@ -74,10 +49,8 @@ const drawFactory  = () => {
   }
   const startDraw = () => {
     const pos = stg.value?.getPointerPosition()
-    // console.log(e.evt)
     if(!pos) return
     const { x, y } = pos
-    // console.log(x)
 
     line.value = new Konva.Line({
       points: [x, y, x, y],
@@ -163,51 +136,38 @@ const drawFactory  = () => {
     activeColor
   }
 }
-const changeColor = (event: any) => {
-  if(!event.target && !event.target.value) return
-  const color = event.target.value
-  activeColor.value = color
-}
-const cursorMove = (e: MouseEvent) => {
-  if(!cursor.value) return
-  const { clientX, clientY } = e
-  cursor.value.style.transform = `translate(${clientX - strokeWidth.value / 2}px, ${clientY -  strokeWidth.value / 2}px)`
-  cursor.value.style.width = `${strokeWidth.value}px`
-  cursor.value.style.height = `${strokeWidth.value}px`
-}
-onMounted(() => {
-  // const createCanvas = canvasFactory()
-  // if(canvas.value){
-  //   createCanvas.init(canvas.value)
-  // }
-  if(!canvas.value) return
-  const stage = new Konva.Stage({
-    container: canvas.value,
-    width: 500,
-    height: 500,
-  });
-  stg.value = stage
-  const layer = new Konva.Layer();
-  lyr.value = layer
-  stg.value.add(layer);
-})
 
-const painter = drawFactory()
+const {
+  changeColor,
+  strokeWidth,
+  changeStrokeWidth,
+  startDraw,
+  stopDraw,
+  activeColor,
+} = drawFactory()
+
+
+onMounted(() => {
+  initStage({width: 500, height: 500})
+  initLayer()
+  setCursorDiameter(strokeWidth.value)
+})
 onMounted(() => {
   if(!canvas.value || !stg.value) return
-  canvas.value!.addEventListener('mouseleave', () => cursor.value!.style.display = 'none')
-  canvas.value!.addEventListener('mouseenter', () => cursor.value!.style.display = 'block')
+  canvas.value!.addEventListener('mouseleave', hidePaintCursor)
+  canvas.value!.addEventListener('mouseenter', showPaintCursor)
   document.body.addEventListener('mousemove', cursorMove)
-  stg.value.on('mousedown', painter.startDraw)
-  canvas.value?.addEventListener('mouseup', painter.stopDraw)
+  stg.value.on('mousedown', startDraw)
+  canvas.value?.addEventListener('mouseup', stopDraw)
 })
+
 </script>
 
 <template >
   <div style="height: 100vh; display: flex; flex-direction: column">
-    <div class="cursor" ref="cursor"></div>
+  <PaintCursor/>
     <div>
-      <input type="color" @change="changeColor">
+      <input type="color" :value="activeColor" @input="changeColor">
       <RangeInput :min="1" :max="125" :value="strokeWidth" @change="changeStrokeWidth" />
     </div>
     <!-- <div @click="console.log($event)" ref="container" id="container" style="width: 100%; height: 100vh; cursor: none;"> -->
@@ -225,12 +185,5 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   cursor: none
-}
-
-.cursor {
-  border: 1px solid black;
-  border-radius: 100%;
-  position: absolute;
-  pointer-events: none;
 }
 </style>
