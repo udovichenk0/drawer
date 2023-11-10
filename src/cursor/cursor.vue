@@ -16,6 +16,7 @@ onMounted(() => {
   border: 1px solid black;
   border-radius: 100%;
   pointer-events: none;
-  position: absolute
+  position: absolute;
+  z-index: 100;
 }
 </style>

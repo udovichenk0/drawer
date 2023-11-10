@@ -43,7 +43,6 @@ const brush = ({
   size: number,
   color: string
 }): Shape => {
-
   const outsidePosition = reactive<Coordinate>({x: null, y: null})
   const line = ref<Konva.Line>()
   const isPaint = ref(false)
@@ -239,6 +238,9 @@ const initCanvas = () => {
 }
 onMounted(() => {
   initCanvas()
+  const a = layer.value?.getContext()
+  a!.getCanvas()._canvas.style.backgroundColor = '#ffffff'
+  canvas.value!.style.backgroundColor = '#435585'
 })
 defineExpose({
   initCanvas,
@@ -257,7 +259,6 @@ defineExpose({
 </template>
 <style scoped>
 .canvas {
-  background: white;
   width: 100vw;
   height: 100vh;
   display: flex;
