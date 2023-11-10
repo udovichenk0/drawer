@@ -7,7 +7,6 @@ const stage = ref<Konva.Stage>()
 const layer = ref<Konva.Layer>()
 
 // utils
-
 function isNull<T>(value: T | null): value is null {
   return value === null
 }
@@ -45,12 +44,10 @@ const brush = ({
   color: string
 }): Shape => {
 
+  const outsidePosition = reactive<Coordinate>({x: null, y: null})
   const line = ref<Konva.Line>()
   const isPaint = ref(false)
-  const outsidePosition = reactive<Coordinate>({x: null, y: null})
   const isOutside = ref(false)
-  const setOutsideState = () => isOutside.value = true
-  const unsetOutsideState = () => isOutside.value = false
   const startDraw = () => {
   const pos = stage.value?.getPointerPosition()
     if(!pos) return
@@ -66,8 +63,8 @@ const brush = ({
     layer.value?.add(line.value)
     canvas.value!.addEventListener('mousemove', draw)
     canvas.value!.addEventListener('mouseup', stopDraw)
-    stage.value?.on('mouseleave', setOutsideState)
-    stage.value?.on('mouseenter', unsetOutsideState)
+    stage.value?.on('mouseleave', () => isOutside.value = true)
+    stage.value?.on('mouseenter', () => isOutside.value = false)
   }
   const draw = (e: any) => {
     const pos = stage.value?.getPointerPosition()
@@ -107,8 +104,6 @@ const brush = ({
     isPaint.value = false
     restoreOutsidePosition()
     canvas.value?.removeEventListener('mousemove', draw)
-    stage.value?.off('mouseleave', setOutsideState)
-    stage.value?.off('mouseenter', unsetOutsideState)
   }
   //====
   const drawLine = (x: number, y: number) => {
@@ -141,11 +136,9 @@ const rect = ({
     startPosition.y = pos.y
     canvas.value?.addEventListener('mousemove', draw)
     canvas.value?.addEventListener('mouseup', stopDraw)
-    stage.value?.on('mouseleave', setOutsideState)
-    stage.value?.on('mouseenter', unsetOutsideState)
+    stage.value?.on('mouseleave', () => isOutside.value = true)
+    stage.value?.on('mouseenter', () => isOutside.value = false)
   }
-  const setOutsideState = () => isOutside.value = true
-  const unsetOutsideState = () => isOutside.value = false
   const draw = (e:any) => {
     if(isOutside.value){
       const { xPosition, yPosition } = calculateOutsidePosition(e.offsetX, e.offsetY)
@@ -175,8 +168,6 @@ const rect = ({
     startPosition.y = null
     layer.value?.add(newRect)
     canvas.value?.removeEventListener('mousemove', draw)
-    stage.value?.off('mouseleave', setOutsideState)
-    stage.value?.off('mouseenter', unsetOutsideState)
   }
   return {
     startDraw
