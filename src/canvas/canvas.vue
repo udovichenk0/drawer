@@ -6,22 +6,36 @@ const canvas = ref<HTMLDivElement | null>(null)
 const stage = ref<Konva.Stage>()
 const layer = ref<Konva.Layer>()
 
+// utils
 
-/**
- * TODO I need to be able to paint and draw some figures,
- *  ? how should i implement these features? 
- *    * probably like factories(classes) that implement one interface, it should have methods like: startDraw, stopDraw, draw
- *  ? where should i store colors and strokeWidth?
- *    * in a parent class/factory
- *  ? how should i trigger each factory, ex. i press on square how it should understand what factory to call
- *    * seems like i have to make a factory method
- */
+function isNull<T>(value: T | null): value is null {
+  return value === null
+}
 
- /**
-  * !change implementation
-  */
+// main
+
+const roundCoordinate = (crd: number) => {
+  if(crd >= 0 && crd <= 500) return crd
+  else if(crd > 500) return 500 
+  return 0
+}    
+const calculateOutsidePosition = (offsetX: number, offsetY: number) => {
+  const width = canvas.value!.getBoundingClientRect().width - 500
+  const height = canvas.value!.getBoundingClientRect().height - 500
+  const xPosition = offsetX - (width/2)
+  const yPosition = offsetY - (height/2)
+  return {
+    xPosition,
+    yPosition
+  }
+}
+
 type Shape = {
   startDraw: () => void,
+}
+type Coordinate = {
+  x: null | number,
+  y: null | number
 }
 const brush = ({
   size,
@@ -33,8 +47,10 @@ const brush = ({
 
   const line = ref<Konva.Line>()
   const isPaint = ref(false)
-  const outsidePosition = reactive({x: 0, y: 0})
+  const outsidePosition = reactive<Coordinate>({x: null, y: null})
   const isOutside = ref(false)
+  const setOutsideState = () => isOutside.value = true
+  const unsetOutsideState = () => isOutside.value = false
   const startDraw = () => {
   const pos = stage.value?.getPointerPosition()
     if(!pos) return
@@ -50,23 +66,13 @@ const brush = ({
     layer.value?.add(line.value)
     canvas.value!.addEventListener('mousemove', draw)
     canvas.value!.addEventListener('mouseup', stopDraw)
+    stage.value?.on('mouseleave', setOutsideState)
+    stage.value?.on('mouseenter', unsetOutsideState)
   }
   const draw = (e: any) => {
     const pos = stage.value?.getPointerPosition()
-    const calculateOutsidePosition = () => {
-      const width = canvas.value!.getBoundingClientRect().width - 500
-      const height = canvas.value!.getBoundingClientRect().height - 500
-      const xPosition = e.offsetX - (width/2)
-      const yPosition = e.offsetY - (height/2)
-      return {
-        xPosition,
-        yPosition
-      }
-    }
-    const { xPosition, yPosition } = calculateOutsidePosition()
+    const { xPosition, yPosition } = calculateOutsidePosition(e.offsetX, e.offsetY)
     if(!pos || !line.value) return
-    stage.value?.on('mouseleave', () => isOutside.value = true)
-    stage.value?.on('mouseenter', () => isOutside.value = false)
 
     if(isOutside.value){
       outsidePosition.x = xPosition
@@ -82,8 +88,8 @@ const brush = ({
 
     if(!isOutside.value && !isPaint.value){
       isPaint.value = true
-      const x = roundCoordinate(outsidePosition.x)
-      const y = roundCoordinate(outsidePosition.y)
+      const x = roundCoordinate(outsidePosition.x!)
+      const y = roundCoordinate(outsidePosition.y!)
       line.value = new Konva.Line({
         points: [x,y],
         stroke: color,
@@ -101,6 +107,8 @@ const brush = ({
     isPaint.value = false
     restoreOutsidePosition()
     canvas.value?.removeEventListener('mousemove', draw)
+    stage.value?.off('mouseleave', setOutsideState)
+    stage.value?.off('mouseenter', unsetOutsideState)
   }
   //====
   const drawLine = (x: number, y: number) => {
@@ -108,30 +116,24 @@ const brush = ({
     const pointers = line.value.points().concat([x,y])
     line.value.points(pointers)
   }
-  const roundCoordinate = (crd: number) => {
-    if(crd >= 0 && crd <= 500) return crd
-    else if(crd > 500) return 500 
-    return 0
-  }
   const restoreOutsidePosition = () => {
-    outsidePosition.x = 0
-    outsidePosition.y = 0
+    outsidePosition.x = null
+    outsidePosition.y = null
   }
   return {
     startDraw
   }
 }
-/**
- * !reimplement
- */
+
 const rect = ({
   color
 }:{
   color: string
 }): Shape => {
-  const outsidePosition = reactive({x: 0, y: 0})
+
+  const endPosition = reactive<Coordinate>({x: null, y: null})
+  const startPosition = reactive<Coordinate>({x: null, y: null})
   const isOutside = ref(false)
-  const startPosition = reactive<{x: null | number, y: null | number}>({x: null, y: null})
   const startDraw = () => {
     const pos = stage.value?.getPointerPosition()
     if(!pos) return
@@ -139,62 +141,47 @@ const rect = ({
     startPosition.y = pos.y
     canvas.value?.addEventListener('mousemove', draw)
     canvas.value?.addEventListener('mouseup', stopDraw)
+    stage.value?.on('mouseleave', setOutsideState)
+    stage.value?.on('mouseenter', unsetOutsideState)
   }
+  const setOutsideState = () => isOutside.value = true
+  const unsetOutsideState = () => isOutside.value = false
   const draw = (e:any) => {
-    const calculateOutsidePosition = () => {
-      const width = canvas.value!.getBoundingClientRect().width - 500
-      const height = canvas.value!.getBoundingClientRect().height - 500
-      const xPosition = e.offsetX - (width/2)
-      const yPosition = e.offsetY - (height/2)
-      return {
-        xPosition,
-        yPosition
-      }
-    }    
-    const { xPosition, yPosition } = calculateOutsidePosition()
-    stage.value?.on('mouseleave', () => isOutside.value = true)
-    stage.value?.on('mouseenter', () => isOutside.value = false)
     if(isOutside.value){
-      outsidePosition.x = roundCoordinate(xPosition)
-      outsidePosition.y = roundCoordinate(yPosition)
-      // console.log("X: ", outsidePosition.x)
-      // console.log("Y: ", outsidePosition.y)
+      const { xPosition, yPosition } = calculateOutsidePosition(e.offsetX, e.offsetY)
+      endPosition.x = roundCoordinate(xPosition)
+      endPosition.y = roundCoordinate(yPosition)
+    }
+    else {
+      endPosition.x = e.offsetX
+      endPosition.y = e.offsetY
     }
   }
-  const roundCoordinate = (crd: number) => {
-    if(crd >= 0 && crd <= 500) return crd
-    else if(crd > 500) return 500 
-    return 0
-  }
+
   const stopDraw = () => {
-    const pos = stage.value?.getPointerPosition()
-    const x = outsidePosition.x
-    const y = outsidePosition.y
-    if(!pos) return
-    if(x < 0 || x > 0) {
-      console.log('here x')
-    }
-    if(y < 0 || y > 0) {
-      console.log('here x')
-    }
-    const posX = x == 0 || x == 500 ? x - startPosition.x! : pos.x - startPosition.x!
-    const posY = y == 0 || y == 500 ? y - startPosition.y! : pos.y - startPosition.y!
+    if(isNull(endPosition.x) || isNull(endPosition.y)) return
+    const rectWidth = endPosition.x! - startPosition.x!
+    const rectHeight = endPosition.y! - startPosition.y!
     const newRect = new Konva.Rect({
       fill: color,
       x: startPosition.x!,
       y: startPosition.y!,
-      width: posX,
-      height: posY,
+      width: rectWidth,
+      height: rectHeight,
     })
-    canvas.value?.removeEventListener('mousemove', draw)
+    endPosition.x = null
+    endPosition.y = null
+    startPosition.x = null
+    startPosition.y = null
     layer.value?.add(newRect)
+    canvas.value?.removeEventListener('mousemove', draw)
+    stage.value?.off('mouseleave', setOutsideState)
+    stage.value?.off('mouseenter', unsetOutsideState)
   }
-
   return {
     startDraw
   }
 }
-
 
 const drawFactory  = () => {
   const DEFAULT_COLOR = '#000000'
