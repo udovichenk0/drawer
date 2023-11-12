@@ -1,13 +1,13 @@
 <script lang="ts" setup>
 import Konva from 'konva';
-import { onMounted, reactive, ref } from 'vue';
+import { onMounted, onUnmounted, reactive, ref } from 'vue';
 import { cursorMove, hidePaintCursor, setCursorDiameter, showPaintCursor } from '../cursor'
 import { isNull } from '@/shared/lib/is-null';
 const canvas = ref<HTMLDivElement | null>(null)
 const stage = ref<Konva.Stage>()
 const layer = ref<Konva.Layer>()
 type Shape = {
-  startDraw: () => void,
+  startDraw: (event: MouseEvent) => void,
 }
 type Coordinate = {
   x: null | number,
@@ -56,9 +56,10 @@ const rect = ({
   const endPosition = reactive<Coordinate>({x: null, y: null})
   const startPosition = reactive<Coordinate>({x: null, y: null})
   const mouseTracker = trackOutsidePosition()
-  const startDraw = () => {
+  const startDraw = (e: MouseEvent) => {
+    console.log(e.button)
     const pos = stage.value?.getPointerPosition()
-    if(!pos) return
+    if(!pos || e.button !== 0) return
     startPosition.x = pos.x
     startPosition.y = pos.y
     trackEvents()
@@ -158,9 +159,9 @@ const brush = ({
   const outsidePosition = reactive<Coordinate>({x: null, y: null})
   const line = ref<Konva.Line>()
   const isPaint = ref(false)
-  const startDraw = () => {
+  const startDraw = (e: MouseEvent) => {
   const pos = stage.value?.getPointerPosition()
-    if(!pos) return
+    if(!pos || e.button !== 0) return
     const { x, y } = pos
     line.value = new Konva.Line({
       points: [x, y, x, y],
@@ -269,6 +270,11 @@ onMounted(() => {
   const a = layer.value?.getContext()
   a!.getCanvas()._canvas.style.backgroundColor = '#ffffff'
   canvas.value!.style.backgroundColor = '#435585'
+  canvas.value?.addEventListener('mousedown', startDraw)
+})
+
+onUnmounted(() => {
+  canvas.value?.removeEventListener('mousedown', startDraw)
 })
 defineExpose({
   initCanvas,
@@ -281,7 +287,6 @@ defineExpose({
 <template>
   <div>
     <div 
-      @mousedown="startDraw"
       @mouseleave="hidePaintCursor" 
       @mouseenter="showPaintCursor" 
       @mousemove="cursorMove"
