@@ -3,6 +3,10 @@ import Konva from 'konva';
 import { onMounted, onUnmounted, reactive, ref } from 'vue';
 import { cursorMove, hidePaintCursor, setCursorDiameter, showPaintCursor } from '../cursor'
 import { isNull } from '@/shared/lib/is-null';
+import { getCoords } from '@/shared/lib/get-coords'
+import { normilizeCoord } from '@/shared/lib/normilize-coord'
+import { isOutsideOfCanvas } from '@/shared/lib/is-outside-of-canvas'
+import { drawLine } from '@/shared/lib/draw-line'
 const canvas = ref<HTMLDivElement | null>(null)
 const stage = ref<Konva.Stage>()
 const layer = ref<Konva.Layer>()
@@ -17,29 +21,10 @@ type Options = {
   color: string,
   size?: number
 }
-const roundCoord = (crd: number) => {
-  //0 and 500 is the min and the max value of canvas coords
-  //make the value not hardcoded
-  if(crd >= 0 && crd <= 500) return crd
-  else if(crd > 500) return 500 
-  return 0
-}    
-const getCoords = (e: MouseEvent, element: HTMLElement) => {
-  const x = e.clientX - (element.getBoundingClientRect().width - 500) / 2
-  const y = e.clientY - (element.getBoundingClientRect().height - 500) / 2
-  return {
-    x,
-    y
-  }
-}
-const drawLine = (line: Konva.Line, x: number, y: number) => {
-  if(!line.value) return
-  const pointers = line.points().concat([x,y])
-  line.points(pointers)
-}
-const isOutsideOfCanvas = (x: number, y: number) => {
-  return x < 0 || x > 500 || y < 0 || y > 500
-}
+  
+
+
+
 const rect = ({
   options,
 }: {
@@ -63,8 +48,8 @@ const rect = ({
   }
   const stopDraw = () => {
     if(isNull(endPosition.x) || isNull(endPosition.y)) return
-    const rectWidth = roundCoord(endPosition.x!) - startPosition.x!
-    const rectHeight = roundCoord(endPosition.y!) - startPosition.y!
+    const rectWidth = normilizeCoord(endPosition.x!) - startPosition.x!
+    const rectHeight = normilizeCoord(endPosition.y!) - startPosition.y!
     const newRect = new Konva.Rect({
       fill: color,
       x: startPosition.x!,
@@ -109,7 +94,6 @@ const rect = ({
     startDraw
   }
 }
-
 const brush = ({
   size,
   color
@@ -145,13 +129,13 @@ const brush = ({
       outsidePosition.y = y
     }
     if(isOutsideOfCanvas(x,y) && shouldPaint.value) {
-      drawLine(line.value as Konva.Line, roundCoord(x), roundCoord(y))
+      drawLine(line.value as Konva.Line, normilizeCoord(x), normilizeCoord(y))
       shouldPaint.value = false
     }
     if(!isOutsideOfCanvas(x,y) && !shouldPaint.value){
       shouldPaint.value = true
-      const x = roundCoord(outsidePosition.x!)
-      const y = roundCoord(outsidePosition.y!)
+      const x = normilizeCoord(outsidePosition.x!)
+      const y = normilizeCoord(outsidePosition.y!)
       line.value = new Konva.Line({
         points: [x,y],
         stroke: color,
