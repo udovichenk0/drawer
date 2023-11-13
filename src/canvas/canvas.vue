@@ -13,72 +13,58 @@ type Coordinate = {
   x: null | number,
   y: null | number
 }
-const roundCoordinate = (crd: number) => {
+type Options = {
+  color: string,
+  size?: number
+}
+const roundCoord = (crd: number) => {
+  //0 and 500 is the min and the max value of canvas coords
+  //make the value not hardcoded
   if(crd >= 0 && crd <= 500) return crd
   else if(crd > 500) return 500 
   return 0
 }    
-const calculateOutsidePosition = (offsetX: number, offsetY: number) => {
-  const width = canvas.value!.getBoundingClientRect().width - 500
-  const height = canvas.value!.getBoundingClientRect().height - 500
-  const xPosition = offsetX - (width/2)
-  const yPosition = offsetY - (height/2)
+const getCoords = (e: MouseEvent, element: HTMLElement) => {
+  const x = e.clientX - (element.getBoundingClientRect().width - 500) / 2
+  const y = e.clientY - (element.getBoundingClientRect().height - 500) / 2
   return {
-    xPosition,
-    yPosition
+    x,
+    y
   }
 }
-
-
-const trackOutsidePosition = () => {
-  const isOutside = ref(false)
-  const setIsOutside = () => isOutside.value = true
-  const unsetIsOutside = () => isOutside.value = false
-  const startTrack = () => {
-    stage.value!.on('mouseleave', setIsOutside)
-    stage.value!.on('mouseenter', unsetIsOutside)
-  }
-  const stopTrack = () => {
-    stage.value!.off('mouseleave', setIsOutside)
-    stage.value!.off('mouseenter', unsetIsOutside)
-  }
-  return {
-    isOutside,
-    startTrack,
-    stopTrack,
-  }
+const drawLine = (line: Konva.Line, x: number, y: number) => {
+  if(!line.value) return
+  const pointers = line.points().concat([x,y])
+  line.points(pointers)
+}
+const isOutsideOfCanvas = (x: number, y: number) => {
+  return x < 0 || x > 500 || y < 0 || y > 500
 }
 const rect = ({
-  color
+  options,
 }: {
-    color: string
+  options: Options,
 }): Shape => {
   const endPosition = reactive<Coordinate>({x: null, y: null})
   const startPosition = reactive<Coordinate>({x: null, y: null})
-  const mouseTracker = trackOutsidePosition()
+  const { color } = options
   const startDraw = (e: MouseEvent) => {
-    console.log(e.button)
-    const pos = stage.value?.getPointerPosition()
-    if(!pos || e.button !== 0) return
-    startPosition.x = pos.x
-    startPosition.y = pos.y
-    trackEvents()
+    if(e.button == 0) {
+      const { x, y } = getCoords(e, canvas.value!)
+      startPosition.x = x
+      startPosition.y = y
+      trackEvents()
+    }
   }
   const draw = (e:any) => {
-    if(mouseTracker.isOutside.value){
-      const { xPosition, yPosition } = calculateOutsidePosition(e.offsetX, e.offsetY)
-      endPosition.x = roundCoordinate(xPosition)
-      endPosition.y = roundCoordinate(yPosition)
-    }
-    else {
-      endPosition.x = e.offsetX
-      endPosition.y = e.offsetY
-    }
+    const { x, y } = getCoords(e, canvas.value!)
+    endPosition.x = x
+    endPosition.y = y
   }
   const stopDraw = () => {
     if(isNull(endPosition.x) || isNull(endPosition.y)) return
-    const rectWidth = endPosition.x! - startPosition.x!
-    const rectHeight = endPosition.y! - startPosition.y!
+    const rectWidth = roundCoord(endPosition.x!) - startPosition.x!
+    const rectHeight = roundCoord(endPosition.y!) - startPosition.y!
     const newRect = new Konva.Rect({
       fill: color,
       x: startPosition.x!,
@@ -86,21 +72,32 @@ const rect = ({
       width: rectWidth,
       height: rectHeight,
     })
-    layer.value?.add(newRect)
+    getActiveLayer()?.add(newRect)
     resetPosition()
     untrackEvents()
   }
   const trackEvents = () => {
-    if(!canvas.value || !stage.value) return
-    canvas.value.addEventListener('mousemove', draw)
-    canvas.value.addEventListener('mouseup', stopDraw)
-    mouseTracker.startTrack()
+    const canvas = getCanvas()
+    if(!canvas || !stage.value) return
+    canvas.addEventListener('mousemove', draw)
+    canvas.addEventListener('mouseup', stopDraw)
   }
   const untrackEvents = () => {
-    if(!canvas.value || !stage.value) return
-    canvas.value.removeEventListener('mousemove', draw)
-    canvas.value.removeEventListener('mouseup', stopDraw)
-    mouseTracker.stopTrack()
+    const canvas = getCanvas()
+    if(!canvas || !stage.value) return
+    canvas.removeEventListener('mousemove', draw)
+    canvas.removeEventListener('mouseup', stopDraw)
+  }
+  const getCanvas = () => {
+    if(stage.value){
+      return stage.value!.container()
+    }
+  }
+  const getActiveLayer = () => {
+    if(stage.value){
+      //temporary harcoded
+      return stage.value!.getLayers()[0]
+    }
   }
   const resetPosition = () => {
     endPosition.x = null
@@ -113,6 +110,97 @@ const rect = ({
   }
 }
 
+const brush = ({
+  size,
+  color
+}: {
+  size: number,
+  color: string
+}): Shape => {
+  const outsidePosition = reactive<Coordinate>({x: null, y: null})
+  const line = ref<Konva.Line>()
+  const shouldPaint = ref(false)
+  const startDraw = (e: MouseEvent) => {
+    if(e.button == 0){
+      const { x, y } = getCoords(e, canvas.value!)
+      const newLine = new Konva.Line({
+        points: [x, y, x, y],
+        stroke: color,
+        strokeWidth: size,
+        lineCap: 'round',
+        lineJoin: 'round',
+      });
+      line.value = newLine
+      shouldPaint.value = true
+      getActiveLayer()?.add(newLine)
+      trackEvents()
+    }
+  }
+  const draw = (e: any) => {
+    if(!line.value) return
+    if(isNull(line.value)) return
+    const {x,y} = getCoords(e, canvas.value!)
+    if(isOutsideOfCanvas(x, y)) {
+      outsidePosition.x = x
+      outsidePosition.y = y
+    }
+    if(isOutsideOfCanvas(x,y) && shouldPaint.value) {
+      drawLine(line.value as Konva.Line, roundCoord(x), roundCoord(y))
+      shouldPaint.value = false
+    }
+    if(!isOutsideOfCanvas(x,y) && !shouldPaint.value){
+      shouldPaint.value = true
+      const x = roundCoord(outsidePosition.x!)
+      const y = roundCoord(outsidePosition.y!)
+      line.value = new Konva.Line({
+        points: [x,y],
+        stroke: color,
+        strokeWidth: size,
+        lineCap: 'round',
+        lineJoin: 'round',
+      });
+      getActiveLayer()?.add(line.value)
+      restoreOutsidePosition()
+    }
+    if(!shouldPaint.value) return
+    drawLine(line.value, x, y)
+  }
+  const stopDraw = () => {
+    shouldPaint.value = false
+    restoreOutsidePosition()
+    untrackEvents()
+  }
+
+  //====
+
+  const restoreOutsidePosition = () => {
+    outsidePosition.x = null
+    outsidePosition.y = null
+  }
+  const trackEvents = () => {
+    getCanvas()?.addEventListener('mousemove', draw)
+    getCanvas()?.addEventListener('mouseup', stopDraw)
+  }
+  const untrackEvents = () => {
+    getCanvas()?.removeEventListener('mousemove', draw)
+    getCanvas()?.removeEventListener('mouseup', stopDraw)
+  }
+  
+  const getCanvas = () => {
+    if(stage.value){
+      return stage.value!.container()
+    }
+  }
+  const getActiveLayer = () => {
+    if(stage.value){
+      //temporary harcoded
+      return stage.value!.getLayers()[0]
+    }
+  }
+  return {
+    startDraw
+  }
+}
 const drawFactory  = () => {
   const DEFAULT_COLOR = '#000000'
   const DEFAULT_SIZE = 10
@@ -133,12 +221,16 @@ const drawFactory  = () => {
   const createDrawingFactory = (type: DrawType) => {
     switch(type){
       case 'rectangle': 
-        return rect({color: activeColor.value})
+        return rect({
+          options: {color: activeColor.value}
+        })
+      case 'paint': 
+        return brush({size: strokeWidth.value, color: activeColor.value})
       default: 
         throw new Error("Invalid type")
     }
   }
-  const choseDraw = createDrawingFactory('rectangle')
+  const choseDraw = createDrawingFactory('paint')
 
   return {
     changeColor,
@@ -148,7 +240,72 @@ const drawFactory  = () => {
     activeColor
   }
 }
-const brush = ({
+
+const initStage = ({width, height}:{width: number, height: number}) => {
+  if(!canvas.value) return
+  stage.value = new Konva.Stage({
+    container: canvas.value,
+    width,
+    height,
+  })
+}
+const initLayer = () => {
+  if(!stage.value) return
+  const newLayer = new Konva.Layer()
+  newLayer.getContext().getCanvas()._canvas.style.backgroundColor = '#ffffff'
+  layer.value = newLayer
+  stage.value?.add(newLayer)
+}
+
+const {strokeWidth,startDraw} = drawFactory()
+
+const initCanvas = () => {
+  if(!canvas.value) return
+  initStage({
+    width: 500,
+    height: 500
+  })
+  canvas.value!.style.backgroundColor = '#435585'
+  canvas.value?.addEventListener('mousedown', startDraw)
+  initLayer()
+  setCursorDiameter(strokeWidth.value)
+}
+onMounted(() => {
+  initCanvas()
+})
+
+onUnmounted(() => {
+  canvas.value?.removeEventListener('mousedown', startDraw)
+})
+defineExpose({
+  initCanvas,
+  canvas,
+  stage,
+  layer
+})
+</script>
+
+<template>
+  <div>
+    <div 
+      @mouseleave="hidePaintCursor" 
+      @mouseenter="showPaintCursor" 
+      @mousemove="cursorMove"
+      class="canvas" ref="canvas" id="canvas-container"></div>
+  </div>
+</template>
+<style scoped>
+.canvas {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: none
+}
+</style>
+
+<!-- const brush = ({
   size,
   color
 }: {
@@ -238,79 +395,4 @@ const brush = ({
   return {
     startDraw
   }
-}
-const initStage = ({width, height}:{width: number, height: number}) => {
-  if(!canvas.value) return
-  stage.value = new Konva.Stage({
-    container: canvas.value,
-    width,
-    height,
-  })
-}
-const initLayer = () => {
-  if(!stage.value) return
-  const newLayer = new Konva.Layer()
-  layer.value = newLayer
-  stage.value?.add(newLayer)
-}
-
-const {strokeWidth,startDraw} = drawFactory()
-
-const initCanvas = () => {
-  if(!canvas.value) return
-  initStage({
-    width: 500,
-    height: 500
-  })
-  initLayer()
-  setCursorDiameter(strokeWidth.value)
-}
-onMounted(() => {
-  initCanvas()
-  const a = layer.value?.getContext()
-  a!.getCanvas()._canvas.style.backgroundColor = '#ffffff'
-  canvas.value!.style.backgroundColor = '#435585'
-  canvas.value?.addEventListener('mousedown', startDraw)
-})
-
-onUnmounted(() => {
-  canvas.value?.removeEventListener('mousedown', startDraw)
-})
-defineExpose({
-  initCanvas,
-  canvas,
-  stage,
-  layer
-})
-</script>
-
-<template>
-  <div>
-    <div 
-      @mouseleave="hidePaintCursor" 
-      @mouseenter="showPaintCursor" 
-      @mousemove="cursorMove"
-      class="canvas" ref="canvas" id="canvas-container"></div>
-  </div>
-</template>
-<style scoped>
-.canvas {
-  width: 100vw;
-  height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: none
-}
-</style>
-
-
-
-
-
-
-
-
-
-
-
+} -->
