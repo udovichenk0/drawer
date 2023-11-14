@@ -18,7 +18,8 @@ export const brush = ({
   }
 }): Shape => {
   const { color, size } = options
-  const outsidePosition = reactive<Coordinate>({x: null, y: null})
+  const initialPos = {x:null, y:null}
+  const outsidePosition = reactive<Coordinate>(initialPos)
   const line = ref<Konva.Line>()
   const shouldPaint = ref(false)
   const startDraw = (e: MouseEvent) => {
@@ -61,22 +62,21 @@ export const brush = ({
         lineJoin: 'round',
       });
       getActiveLayer()?.add(line.value)
-      restoreOutsidePosition()
+      resetPosition()
     }
     if(!shouldPaint.value) return
     drawLine(line.value, x, y)
   }
   const stopDraw = () => {
     shouldPaint.value = false
-    restoreOutsidePosition()
+    resetPosition()
     untrackEvents()
   }
 
   //====
 
-  const restoreOutsidePosition = () => {
-    outsidePosition.x = null
-    outsidePosition.y = null
+  const resetPosition = () => {
+    Object.assign(outsidePosition, initialPos)
   }
   const trackEvents = () => {
     getCanvas()?.addEventListener('mousemove', draw)

@@ -13,8 +13,8 @@ export const rect = ({
   options: Options
 }): Shape => {
   const { color } = options
-  const endPosition = reactive<Coordinate>({x: null, y: null})
-  const startPosition = reactive<Coordinate>({x: null, y: null})
+  const endPosition = reactive<Coordinate>({x:null, y:null})
+  const startPosition = reactive<Coordinate>({x:null, y:null})
   const startDraw = (e: MouseEvent) => {
     if(e.button == 0) {
       const { x, y } = getCoords(e, getCanvas()!)
@@ -30,6 +30,7 @@ export const rect = ({
   }
   const stopDraw = () => {
     if(isNull(endPosition.x) || isNull(endPosition.y)) return
+    console.log(endPosition, startPosition)
     const rectWidth = normilizeCoord(endPosition.x!) - startPosition.x!
     const rectHeight = normilizeCoord(endPosition.y!) - startPosition.y!
     const newRect = new Konva.Rect({
@@ -67,10 +68,9 @@ export const rect = ({
     }
   }
   const resetPosition = () => {
-    endPosition.x = null
-    endPosition.y = null
-    startPosition.x = null
-    startPosition.y = null
+    const initialPos = {x:null, y:null}
+    Object.assign(endPosition, initialPos)
+    Object.assign(startPosition, initialPos)
   }
   return {
     startDraw
