@@ -1,3 +1,4 @@
+import { isCanvas } from './../../shared/lib/is-canvas';
 import { brushSize } from './options';
 import { drawLine } from "@/shared/lib/draw-line"
 import { getCoords } from "@/shared/lib/get-coords"
@@ -17,7 +18,7 @@ export const brush = (): Tool => {
   let shouldPaint = false
 
   const startDraw = (e: MouseEvent) => {
-    if(e.button == 0){
+    if(e.button == 0 && isCanvas(e.target)){
       const { x, y } = getCoords(e, getCanvas()!)
       const newLine = new Konva.Line({
         points: [x, y, x, y],

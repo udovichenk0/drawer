@@ -1,4 +1,4 @@
-import { brush } from './brush/paint';
+import { brush } from './brush/brush';
 import { ref } from 'vue'
 import { Tool } from './types'
 export const activeTool = ref<Tool>(brush())

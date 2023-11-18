@@ -1,3 +1,4 @@
+import { isCanvas } from './../../shared/lib/is-canvas';
 import Konva from "konva"
 import { reactive } from "vue"
 import { isNull } from '@/shared/lib/is-null'
@@ -11,7 +12,7 @@ export const rect = (): Tool => {
   const endPosition = reactive<Coordinate>({x:null, y:null})
   const startPosition = reactive<Coordinate>({x:null, y:null})
   const startDraw = (e: MouseEvent) => {
-    if(e.button == 0) {
+    if(e.button == 0 && isCanvas(e.target)) {
       const { x, y } = getCoords(e, getCanvas()!)
       startPosition.x = x
       startPosition.y = y
