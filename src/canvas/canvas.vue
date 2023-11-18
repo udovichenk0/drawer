@@ -44,7 +44,6 @@ defineExpose({
 </script>
 
 <template>
-  <!-- <div> -->
     <div 
       @mousedown="activeTool?.startDraw"
       @mouseleave="hidePaintCursor" 
@@ -53,13 +52,12 @@ defineExpose({
       class="canvas" 
       :ref="(el) => canvas = el as HTMLDivElement" 
       id="canvas-container"></div>
-  <!-- </div> -->
 </template>
 <style scoped>
 .canvas {
   width: 100vw;
   display: flex;
-  height: 100vh;
+  height: 100%;
   align-items: center;
   justify-content: center;
   cursor: none

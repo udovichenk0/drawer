@@ -8,7 +8,7 @@ import { rect } from './tool/rectangle/rect';
 </script>
 
 <template >
-  <div style="display: flex; flex-direction: column">
+  <div style="display: flex; flex-direction: column; height: 100vh;">
     <div>
       <input type="color" :value="color" @input="(e) => setColor((e.target as HTMLInputElement).value)">
       <!-- <RangeInput :min="1" :max="125" :value="strokeWidth" @change="changeStrokeWidth" /> -->
