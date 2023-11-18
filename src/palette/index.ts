@@ -1,1 +1,1 @@
-export { setColor } from './palette.model'
+export { setColor, color } from './palette.model'

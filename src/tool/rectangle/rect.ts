@@ -1,18 +1,13 @@
-import { Options } from './../../types';
-import { getCoords } from "@/shared/lib/get-coords"
-import { normilizeCoord } from "@/shared/lib/normilize-coord"
 import Konva from "konva"
 import { reactive } from "vue"
-import { stage } from "../../viewport"
-import { Coordinate, Shape } from "../../types"
-import { isNull } from "@/shared/lib/is-null"
+import { isNull } from '@/shared/lib/is-null'
+import { Coordinate, Tool } from "../types"
+import { stage } from "@/canvas/viewport"
+import { getCoords } from "@/shared/lib/get-coords"
+import { normilizeCoord } from "@/shared/lib/normilize-coord"
+import { color } from "@/palette"
 
-export const rect = ({
-  options
-}: {
-  options: Options
-}): Shape => {
-  const { color } = options
+export const rect = (): Tool => {
   const endPosition = reactive<Coordinate>({x:null, y:null})
   const startPosition = reactive<Coordinate>({x:null, y:null})
   const startDraw = (e: MouseEvent) => {
@@ -30,11 +25,10 @@ export const rect = ({
   }
   const stopDraw = () => {
     if(isNull(endPosition.x) || isNull(endPosition.y)) return
-    console.log(endPosition, startPosition)
     const rectWidth = normilizeCoord(endPosition.x!) - startPosition.x!
     const rectHeight = normilizeCoord(endPosition.y!) - startPosition.y!
     const newRect = new Konva.Rect({
-      fill: color,
+      fill: color.value,
       x: startPosition.x!,
       y: startPosition.y!,
       width: rectWidth,
@@ -45,21 +39,24 @@ export const rect = ({
     untrackEvents()
   }
   const trackEvents = () => {
-    const canvas = getCanvas()
+    const canvas = getContainer()
     if(!canvas || !stage.value) return
     canvas.addEventListener('mousemove', draw)
     canvas.addEventListener('mouseup', stopDraw)
   }
   const untrackEvents = () => {
-    const canvas = getCanvas()
+    const canvas = getContainer()
     if(!canvas || !stage.value) return
     canvas.removeEventListener('mousemove', draw)
     canvas.removeEventListener('mouseup', stopDraw)
   }
-  const getCanvas = () => {
+  const getContainer = () => {
     if(stage.value){
       return stage.value!.container()
     }
+  }
+  const getCanvas = () => {
+    return getActiveLayer()?.getCanvas()._canvas
   }
   const getActiveLayer = () => {
     if(stage.value){
@@ -73,6 +70,9 @@ export const rect = ({
     Object.assign(startPosition, initialPos)
   }
   return {
-    startDraw
+    startDraw,
+    meta: {
+      name: 'rectangle'
+    }
   }
 }

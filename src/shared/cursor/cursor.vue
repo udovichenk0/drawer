@@ -1,9 +1,5 @@
 <script lang="ts" setup>
-import { onMounted } from 'vue';
 import { paintCursor } from './cursor.model';
-onMounted(() => {
-  // console.log(paintCursor.value)
-})
 </script>
 <template>
   <div class="cursor" :ref="(el) => {

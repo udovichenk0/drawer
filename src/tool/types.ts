@@ -1,5 +1,9 @@
-export type Shape = {
+type ToolType = 'rectangle' | 'brush'
+export type Tool = {
   startDraw: (event: MouseEvent) => void,
+  meta: {
+    name: ToolType
+  }
 }
 export type Coordinate = {
   x: null | number,

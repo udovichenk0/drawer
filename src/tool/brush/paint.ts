@@ -4,36 +4,30 @@ import { getCoords } from "@/shared/lib/get-coords"
 import { isOutsideOfCanvas } from "@/shared/lib/is-outside-of-canvas"
 import { normilizeCoord } from "@/shared/lib/normilize-coord"
 import Konva from "konva"
-import { reactive, ref } from "vue"
-import { Shape, Coordinate } from "../types"
-import { stage } from "../viewport"
+import { reactive } from "vue"
+import { Tool, Coordinate } from "../types"
 import { isNull } from "@/shared/lib/is-null"
+import { stage } from '@/canvas/viewport';
+import { color } from '@/palette';
 
-export const brush = ({
-  options
-}: {
-  options: {
-    color: string,
-    size: number
-  }
-}): Shape => {
-  const { color, size } = options
+export const brush = (): Tool => {
   const initialPos = {x:null, y:null}
-  const outsidePosition = reactive<Coordinate>(initialPos)
-  const line = ref<Konva.Line>()
-  const shouldPaint = ref(false)
+  let outsidePosition = reactive<Coordinate>(initialPos)
+  let line:Konva.Line
+  let shouldPaint = false
+
   const startDraw = (e: MouseEvent) => {
     if(e.button == 0){
       const { x, y } = getCoords(e, getCanvas()!)
       const newLine = new Konva.Line({
         points: [x, y, x, y],
-        stroke: color,
+        stroke: color.value,
         strokeWidth: brushSize.value,
         lineCap: 'round',
         lineJoin: 'round',
       });
-      line.value = newLine
-      shouldPaint.value = true
+      line = newLine
+      shouldPaint = true
       getActiveLayer()?.add(newLine)
       trackEvents()
     }
@@ -46,29 +40,29 @@ export const brush = ({
       outsidePosition.x = x
       outsidePosition.y = y
     }
-    if(isOutsideOfCanvas(x,y) && shouldPaint.value) {
-      drawLine(line.value as Konva.Line, normilizeCoord(x), normilizeCoord(y))
-      shouldPaint.value = false
+    if(isOutsideOfCanvas(x,y) && shouldPaint) {
+      drawLine(line, normilizeCoord(x), normilizeCoord(y))
+      shouldPaint = false
     }
-    if(!isOutsideOfCanvas(x,y) && !shouldPaint.value){
-      shouldPaint.value = true
+    if(!isOutsideOfCanvas(x,y) && !shouldPaint){
+      shouldPaint = true
       const x = normilizeCoord(outsidePosition.x!)
       const y = normilizeCoord(outsidePosition.y!)
-      line.value = new Konva.Line({
+      line = new Konva.Line({
         points: [x,y],
-        stroke: color,
-        strokeWidth: size,
+        stroke: color.value,
+        strokeWidth: brushSize.value,
         lineCap: 'round',
         lineJoin: 'round',
       });
-      getActiveLayer()?.add(line.value)
+      getActiveLayer()?.add(line)
       resetPosition()
     }
-    if(!shouldPaint.value) return
-    drawLine(line.value, x, y)
+    if(!shouldPaint) return
+    drawLine(line, x, y)
   }
   const stopDraw = () => {
-    shouldPaint.value = false
+    shouldPaint = false
     resetPosition()
     untrackEvents()
   }
@@ -79,18 +73,21 @@ export const brush = ({
     Object.assign(outsidePosition, initialPos)
   }
   const trackEvents = () => {
-    getCanvas()?.addEventListener('mousemove', draw)
-    getCanvas()?.addEventListener('mouseup', stopDraw)
+    getContainer()?.addEventListener('mousemove', draw)
+    getContainer()?.addEventListener('mouseup', stopDraw)
   }
   const untrackEvents = () => {
-    getCanvas()?.removeEventListener('mousemove', draw)
-    getCanvas()?.removeEventListener('mouseup', stopDraw)
+    getContainer()?.removeEventListener('mousemove', draw)
+    getContainer()?.removeEventListener('mouseup', stopDraw)
   }
   
-  const getCanvas = () => {
+  const getContainer = () => {
     if(stage.value){
       return stage.value!.container()
     }
+  }
+  const getCanvas = () => {
+    return getActiveLayer()?.getCanvas()._canvas
   }
   const getActiveLayer = () => {
     if(stage.value){
@@ -99,6 +96,9 @@ export const brush = ({
     }
   }
   return {
-    startDraw
+    startDraw,
+    meta: {
+      name: "brush"
+    }
   }
 }
