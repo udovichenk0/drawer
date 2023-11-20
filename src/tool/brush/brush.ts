@@ -33,7 +33,7 @@ export const brush = (): Tool => {
       trackEvents()
     }
   }
-  const draw = (e: any) => {
+  const draw = (e: MouseEvent) => {
     if(!line.value) return
     if(isNull(line.value)) return
     const {x,y} = getCoords(e, getCanvas()!)

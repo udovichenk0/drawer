@@ -26,7 +26,7 @@ export const rect = (): Tool => {
       trackEvents()
     }
   }
-  const draw = (e:any) => {
+  const draw = (e: MouseEvent) => {
     const { x, y } = getCoords(e, getCanvas()!)
     rectangle.width(x - startPosition.x!)
     rectangle.height(y - startPosition.y!)
