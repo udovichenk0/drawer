@@ -1,18 +1,27 @@
-import { DEFAULT_PREVIEW_COLOR } from './../config';
-import { isCanvas } from './../../shared/lib/is-canvas';
+import { DEFAULT_PREVIEW_COLOR } from '../../config';
+import { isCanvas } from '@/shared/lib/is-canvas';
 import Konva from "konva"
-import { reactive } from "vue"
-import { Coordinate, Tool } from "../types"
-import { stage } from "@/canvas/viewport"
+import { Tool } from "../../types"
 import { getCoords } from "@/shared/lib/get-coords"
 import { color } from "@/palette"
+import { createShape } from '../create-shape';
 
-export const rect = (): Tool => {
-  const endPosition = reactive<Coordinate>({x:null, y:null})
-  const startPosition = reactive<Coordinate>({x:null, y:null})
+
+//pass canvas probably and then create factory commonFUnction with it
+export const rect = (stage?: Konva.Stage): Tool => {
+  const {
+    getCanvas,
+    endPosition,
+    startPosition,
+    getActiveLayer,
+    resetPosition,
+    getContainer,
+    getCursor
+  } = createShape(stage)
   let rectangle: Konva.Rect
   const startDraw = (e: MouseEvent) => {
-    if(e.button == 0 && isCanvas(e.target)) {
+    
+    if(e.button == 0 && isCanvas(e.target) && !!stage) {
       const { x, y } = getCoords(e, getCanvas()!)
       rectangle = new Konva.Rect({
         stroke: DEFAULT_PREVIEW_COLOR,
@@ -42,38 +51,17 @@ export const rect = (): Tool => {
   }
   const trackEvents = () => {
     const canvas = getContainer()
-    if(!canvas || !stage.value) return
+    if(!canvas || !stage) return
     canvas.addEventListener('mousemove', draw)
     canvas.addEventListener('mouseup', stopDraw)
   }
   const untrackEvents = () => {
     const canvas = getContainer()
-    if(!canvas || !stage.value) return
+    if(!canvas || !stage) return
     canvas.removeEventListener('mousemove', draw)
     canvas.removeEventListener('mouseup', stopDraw)
   }
-  const getContainer = () => {
-    if(stage.value){
-      return stage.value!.container()
-    }
-  }
-  const getCanvas = () => {
-    return getActiveLayer()?.getCanvas()._canvas
-  }
-  const getActiveLayer = () => {
-    if(stage.value){
-      //temporary harcoded
-      return stage.value!.getLayers()[0]
-    }
-  }
-  const getCursor = () => {
-    return 'crosshair'
-  }
-  const resetPosition = () => {
-    const initialPos = {x:null, y:null}
-    Object.assign(endPosition, initialPos)
-    Object.assign(startPosition, initialPos)
-  }
+
   return {
     startDraw,
     getCursor,

@@ -3,7 +3,8 @@ import { Project } from './pages'
 import { color, setColor } from './palette/palette.model';
 import { activeTool, setActiveTool } from './tool/tool.model';
 import { brush } from './tool/brush/brush';
-import { rect } from './tool/rectangle/rect';
+import { rect } from './tool/shape/rectangle/rect';
+import { stage } from './canvas/viewport';
 
 </script>
 
@@ -13,10 +14,10 @@ import { rect } from './tool/rectangle/rect';
       <input type="color" :value="color" @input="(e) => setColor((e.target as HTMLInputElement).value)">
       <!-- <RangeInput :min="1" :max="125" :value="strokeWidth" @change="changeStrokeWidth" /> -->
       <button @click="() => {
-        setActiveTool(brush())
+        setActiveTool(brush(stage))
       }">Pick brush</button>
       <button @click="() => {
-        setActiveTool(rect())
+        setActiveTool(rect(stage))
       }">Pick rect</button>
     </div> 
     <Project 

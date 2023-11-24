@@ -8,17 +8,16 @@ import Konva from "konva"
 import { reactive } from "vue"
 import { Tool, Coordinate } from "../types"
 import { isNull } from "@/shared/lib/is-null"
-import { stage } from '@/canvas/viewport';
 import { color } from '@/palette';
 
-export const brush = (): Tool => {
+export const brush = (stage?: Konva.Stage): Tool => {
   const initialPos = {x:null, y:null}
   let outsidePosition = reactive<Coordinate>(initialPos)
   let line:Konva.Line
   let shouldPaint = false
 
   const startDraw = (e: MouseEvent) => {
-    if(e.button == 0 && isCanvas(e.target)){
+    if(e.button == 0 && isCanvas(e.target) && !!stage){
       const { x, y } = getCoords(e, getCanvas()!)
       const newLine = new Konva.Line({
         points: [x, y, x, y],
@@ -90,17 +89,17 @@ export const brush = (): Tool => {
   }
   
   const getContainer = () => {
-    if(stage.value){
-      return stage.value!.container()
+    if(stage){
+      return stage!.container()
     }
   }
   const getCanvas = () => {
     return getActiveLayer()?.getCanvas()._canvas
   }
   const getActiveLayer = () => {
-    if(stage.value){
+    if(stage){
       //temporary harcoded
-      return stage.value!.getLayers()[0]
+      return stage!.getLayers()[0]
     }
   }
   return {
