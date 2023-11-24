@@ -36,6 +36,7 @@ export const rect = (): Tool => {
   const stopDraw = () => {
     rectangle.fill(color.value)
     rectangle.opacity(1)
+    rectangle.strokeWidth(0)
     resetPosition()
     untrackEvents()
   }
