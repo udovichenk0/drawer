@@ -65,6 +65,9 @@ export const rect = (): Tool => {
       return stage.value!.getLayers()[0]
     }
   }
+  const getCursor = () => {
+    return 'crosshair'
+  }
   const resetPosition = () => {
     const initialPos = {x:null, y:null}
     Object.assign(endPosition, initialPos)
@@ -72,6 +75,7 @@ export const rect = (): Tool => {
   }
   return {
     startDraw,
+    getCursor,
     meta: {
       name: 'rectangle'
     }

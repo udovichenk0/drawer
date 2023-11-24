@@ -1,7 +1,6 @@
 <script lang="ts" setup>
 import Konva from 'konva';
 import { onMounted } from 'vue';
-import { cursorMove, hidePaintCursor, setCursorDiameter, showPaintCursor } from '@/shared/cursor'
 import { canvas, stage, layer } from './viewport'
 import { activeTool } from '@/tool/tool.model';
 
@@ -29,7 +28,6 @@ const initCanvas = () => {
   })
   canvas.value!.style.backgroundColor = '#435585'
   initLayer()
-  setCursorDiameter(10)
 }
 onMounted(() => {
   initCanvas()
@@ -46,9 +44,6 @@ defineExpose({
 <template>
     <div 
       @mousedown="activeTool?.startDraw"
-      @mouseleave="hidePaintCursor" 
-      @mouseenter="showPaintCursor" 
-      @mousemove="cursorMove"
       class="canvas" 
       :ref="(el) => canvas = el as HTMLDivElement" 
       id="canvas-container"></div>
@@ -60,6 +55,5 @@ defineExpose({
   height: 100%;
   align-items: center;
   justify-content: center;
-  cursor: none
 }
 </style>

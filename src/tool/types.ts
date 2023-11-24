@@ -1,6 +1,7 @@
 type ToolType = 'rectangle' | 'brush'
 export type Tool = {
   startDraw: (event: MouseEvent) => void,
+  getCursor: () => string,
   meta: {
     name: ToolType
   }
