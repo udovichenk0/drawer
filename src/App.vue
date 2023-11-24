@@ -1,16 +1,9 @@
 <script setup lang="ts">
-import { PaintCursor } from '@/shared/cursor'
 import { Project } from './pages'
 import { color, setColor } from './palette/palette.model';
 import { activeTool, setActiveTool } from './tool/tool.model';
 import { brush } from './tool/brush/brush';
 import { rect } from './tool/rectangle/rect';
-import { onMounted, ref } from 'vue';
-
-const cursor = ref<InstanceType<typeof PaintCursor> | null>(null)
-onMounted(() => {
-  cursor.value?.setCursorDiameter(10)
-})
 
 </script>
 
@@ -30,9 +23,6 @@ onMounted(() => {
       :style="{
         cursor: activeTool?.getCursor()
       }"
-      @mouseleave="cursor?.hidePaintCursor" 
-      @mouseenter="cursor?.showPaintCursor" 
-      @mousemove="cursor?.cursorMove"
     />
   </div>
 </template>
