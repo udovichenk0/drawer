@@ -1,27 +1,24 @@
-import { DEFAULT_PREVIEW_COLOR } from '../../config';
 import { isCanvas } from '@/shared/lib/is-canvas';
 import Konva from "konva"
 import { Tool } from "../../types"
 import { getCoords } from "@/shared/lib/get-coords"
-import { color } from "@/palette"
-import { createShape } from '../create-shape';
+import { initShape } from '../init-shape';
+import { getCanvas, getContainer, getLayer } from '@/features/canvas/infrastructure';
+import { color } from '../../domain/change-color';
 
+export const DEFAULT_PREVIEW_COLOR = '#000000'
 
-//pass canvas probably and then create factory commonFUnction with it
-export const rect = (stage?: Konva.Stage): Tool => {
+export const createRect = (): Tool => {
   const {
-    getCanvas,
     endPosition,
     startPosition,
-    getActiveLayer,
     resetPosition,
-    getContainer,
     getCursor
-  } = createShape(stage)
+  } = initShape()
   let rectangle: Konva.Rect
   const startDraw = (e: MouseEvent) => {
     
-    if(e.button == 0 && isCanvas(e.target) && !!stage) {
+    if(e.button == 0 && isCanvas(e.target)) {
       const { x, y } = getCoords(e, getCanvas()!)
       rectangle = new Konva.Rect({
         stroke: DEFAULT_PREVIEW_COLOR,
@@ -29,13 +26,17 @@ export const rect = (stage?: Konva.Stage): Tool => {
         x,
         y,
       })
-      getActiveLayer()?.add(rectangle)
+      getLayer()?.add(rectangle)
       startPosition.x = x
       startPosition.y = y
       trackEvents()
     }
   }
   const draw = (e: MouseEvent) => {
+    if(e.buttons == 0) {
+      stopDraw()
+      return
+    }
     const { x, y } = getCoords(e, getCanvas()!)
     rectangle.width(x - startPosition.x!)
     rectangle.height(y - startPosition.y!)
@@ -50,16 +51,10 @@ export const rect = (stage?: Konva.Stage): Tool => {
     untrackEvents()
   }
   const trackEvents = () => {
-    const canvas = getContainer()
-    if(!canvas || !stage) return
-    canvas.addEventListener('mousemove', draw)
-    canvas.addEventListener('mouseup', stopDraw)
+    getContainer().addEventListener('mousemove', draw)
   }
   const untrackEvents = () => {
-    const canvas = getContainer()
-    if(!canvas || !stage) return
-    canvas.removeEventListener('mousemove', draw)
-    canvas.removeEventListener('mouseup', stopDraw)
+    getContainer().removeEventListener('mousemove', draw)
   }
 
   return {

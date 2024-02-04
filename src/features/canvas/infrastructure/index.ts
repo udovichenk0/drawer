@@ -1,0 +1,1 @@
+export { canvas, layer, stage, getCanvas, getContainer, getLayer } from './store'

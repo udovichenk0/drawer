@@ -1,26 +1,11 @@
 import { reactive } from "vue"
 import { Coordinate } from "../types"
-import Konva from "konva"
 
-export const createShape = (stage?: Konva.Stage) => {
+export const initShape = () => {
 
   const startPosition = reactive<Coordinate>({x:null, y:null})
   const endPosition = reactive<Coordinate>({x:null, y:null})
 
-  const getContainer = () => {
-    if(stage){
-      return stage.container()
-    }
-  }
-  const getCanvas = () => {
-    return getActiveLayer()?.getCanvas()._canvas
-  }
-  const getActiveLayer = () => {
-    if(stage){
-      //temporary harcoded
-      return stage.getLayers()[0]
-    }
-  }
   const getCursor = () => {
     return 'crosshair'
   }
@@ -36,9 +21,6 @@ export const createShape = (stage?: Konva.Stage) => {
   return {
     startPosition,
     endPosition,
-    getContainer,
-    getCanvas,
-    getActiveLayer,
     getCursor,
     setPosition,
     resetPosition

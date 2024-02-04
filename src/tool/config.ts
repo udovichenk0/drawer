@@ -1,1 +1,0 @@
-export const DEFAULT_PREVIEW_COLOR = '#000000'

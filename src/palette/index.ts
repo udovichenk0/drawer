@@ -1,1 +1,0 @@
-export { setColor, color } from './palette.model'

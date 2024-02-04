@@ -1,0 +1,1 @@
+//get tool settings from browser storage
